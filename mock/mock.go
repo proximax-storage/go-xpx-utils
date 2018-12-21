@@ -20,11 +20,12 @@ type Mock struct {
 }
 
 type Router struct {
-	Path              string
-	RespHttpCode      int
-	RespBody          string
-	ReqJsonBodyStruct interface{}
-	FormParams        []FormParameter
+	AcceptedHttpMethods []string
+	Path                string
+	RespHttpCode        int
+	RespBody            string
+	ReqJsonBodyStruct   interface{}
+	FormParams          []FormParameter
 }
 
 type FormParameter struct {
@@ -89,6 +90,24 @@ func (m *Mock) AddRouter(routers ...*Router) {
 		m.AddHandler(
 			router.Path,
 			func(resp http.ResponseWriter, req *http.Request) {
+				if len(router.AcceptedHttpMethods) != 0 {
+					currentMethod := req.Method
+
+					isAccepted := false
+
+					for _, acceptedMethod := range router.AcceptedHttpMethods {
+						if acceptedMethod == currentMethod {
+							isAccepted = true
+							break
+						}
+					}
+
+					if !isAccepted {
+						resp.WriteHeader(http.StatusMethodNotAllowed)
+						return
+					}
+				}
+
 				// Checking json body
 				if router.ReqJsonBodyStruct != nil {
 					bodyBytes, err := ioutil.ReadAll(req.Body)
