@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+type HttpStatusCode int
+
 type RestClient struct {
 	mPartClient *MultiPartHttpClient
 	addr        string
@@ -35,41 +37,36 @@ func NewRestClient(addr string) (*RestClient, error) {
 	return cl, nil
 }
 
-func (ref *RestClient) Get(ctx ctx.Context, path string, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) Get(ctx ctx.Context, path string, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	return ref.doRequest(ctx, http.MethodGet, path, nil, inputDTO, headerRaws...)
 }
 
-func (ref *RestClient) Post(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) Post(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	return ref.doRequest(ctx, http.MethodPost, path, outputDTO, inputDTO, headerRaws...)
 }
 
-func (ref *RestClient) Put(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) Put(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	return ref.doRequest(ctx, http.MethodPut, path, outputDTO, inputDTO, headerRaws...)
 }
 
-func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	return ref.doRequest(ctx, http.MethodDelete, path, outputDTO, inputDTO, headerRaws...)
 }
 
-func (ref *RestClient) PostFile(ctx ctx.Context, path string, reader io.Reader, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) PostFile(ctx ctx.Context, path string, reader io.Reader, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	respBody, statusCode, err := ref.mPartClient.PostFile(ctx, path, reader, headerRaws...)
 	if err != nil {
 		return 0, err
 	}
 
-	buf, err := ioutil.ReadAll(respBody)
-	if err != nil {
-		return 0, err
-	}
-
-	return statusCode, json.Unmarshal(buf, inputDTO)
+	return statusCode, convertRespToJson(respBody, inputDTO)
 }
 
-func (ref *RestClient) GetFile(ctx ctx.Context, path string, headerRaws ...HeaderRaw) (io.Reader, int, error) {
+func (ref *RestClient) GetFile(ctx ctx.Context, path string, headerRaws ...HeaderRaw) (io.Reader, HttpStatusCode, error) {
 	return ref.mPartClient.GetFile(ctx, path, headerRaws...)
 }
 
-func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (int, error) {
+func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, headerRaws ...HeaderRaw) (HttpStatusCode, error) {
 	var (
 		buf    []byte
 		err    error
@@ -105,7 +102,18 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		return 0, err
 	}
 
-	buf, err = ioutil.ReadAll(resp.Body)
+	return HttpStatusCode(resp.StatusCode), convertRespToJson(resp.Body, inputDTO)
+}
 
-	return resp.StatusCode, json.Unmarshal(buf, inputDTO)
+func convertRespToJson(respBody io.Reader, inputDTO interface{}) error {
+	if inputDTO != nil {
+		buf, err := ioutil.ReadAll(respBody)
+		if err != nil {
+			return err
+		}
+
+		return json.Unmarshal(buf, inputDTO)
+	}
+
+	return nil
 }
