@@ -98,6 +98,10 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		return nil, err
 	}
 
+	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusBadRequest {
+		return resp, errors.New("server error")
+	}
+
 	return resp, convertRespToJson(resp.Body, inputDTO)
 }
 
@@ -105,7 +109,7 @@ func convertRespToJson(respBody io.Reader, inputDTO interface{}) error {
 	if inputDTO != nil {
 		if buf, err := ioutil.ReadAll(respBody); err != nil {
 			return err
-		} else {
+		} else if len(buf) != 0 {
 			return json.Unmarshal(buf, inputDTO)
 		}
 	}
