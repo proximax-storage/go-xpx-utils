@@ -134,6 +134,14 @@ func (m *Mock) AddRouter(routers ...*Router) {
 				} else if len(router.FormParams) != 0 { // If not json maybe are there form parameters ?
 					errors := make([]string, 0, 1)
 
+					if err := req.ParseForm(); err != nil {
+						resp.WriteHeader(http.StatusBadRequest)
+
+						writeStringToResp(resp, err.Error())
+
+						return
+					}
+
 					for _, param := range router.FormParams {
 						val := req.Form[param.Name]
 

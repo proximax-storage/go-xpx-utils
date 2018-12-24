@@ -42,9 +42,9 @@ func TestRestClient_Get(t *testing.T) {
 
 	inputDTO := &testOne{}
 
-	statusCode, err := cl.Get(testContext, "/testGet", inputDTO)
+	response, err := cl.Get(testContext, "/testGet", inputDTO)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	tests.ValidateStringers(t, test1Obj, inputDTO)
 }
@@ -65,9 +65,9 @@ func TestRestClient_Post(t *testing.T) {
 	outputDTO := &testOne{Msg: "Hello"}
 	inputDTO := &testOne{}
 
-	statusCode, err := cl.Post(testContext, "/testPost", outputDTO, inputDTO)
+	response, err := cl.Post(testContext, "/testPost", outputDTO, inputDTO)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	tests.ValidateStringers(t, test1Obj, inputDTO)
 }
@@ -88,9 +88,9 @@ func TestRestClient_Put(t *testing.T) {
 	outputDTO := &testOne{Msg: "Hello"}
 	inputDTO := &testOne{}
 
-	statusCode, err := cl.Put(testContext, "/testPut", outputDTO, inputDTO)
+	response, err := cl.Put(testContext, "/testPut", outputDTO, inputDTO)
 	assert.Nil(t, err)
-	assert.Equal(t, http.StatusOK, statusCode)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	tests.ValidateStringers(t, test1Obj, inputDTO)
 }
@@ -111,8 +111,8 @@ func TestRestClient_Delete(t *testing.T) {
 	outputDTO := &testOne{Msg: "Hello"}
 	inputDTO := &testOne{}
 
-	statusCode, err := cl.Delete(testContext, "/testDelete", outputDTO, inputDTO)
-	assert.Equal(t, http.StatusOK, statusCode)
+	response, err := cl.Delete(testContext, "/testDelete", outputDTO, inputDTO)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 
 	tests.ValidateStringers(t, test1Obj, inputDTO)
 }

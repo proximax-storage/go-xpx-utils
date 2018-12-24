@@ -20,10 +20,10 @@ func NewMultiPartHttpClientClient(addr string) (*MultiPartHttpClient, error) {
 	return &MultiPartHttpClient{addr: addr, cl: &http.Client{}}, nil
 }
 
-func (ref *MultiPartHttpClient) PostFile(ctx context.Context, path string, reqBody io.Reader, headerRaws ...HeaderRaw) (io.Reader, HttpStatusCode, error) {
+func (ref *MultiPartHttpClient) PostFile(ctx context.Context, path string, reqBody io.Reader, headerRaws ...HeaderRaw) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, ref.addr+path, reqBody)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "multipart/form-data")
@@ -36,16 +36,16 @@ func (ref *MultiPartHttpClient) PostFile(ctx context.Context, path string, reqBo
 
 	resp, err := ref.cl.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return resp.Body, HttpStatusCode(resp.StatusCode), nil
+	return resp, nil
 }
 
-func (ref *MultiPartHttpClient) GetFile(ctx context.Context, path string, headerRaws ...HeaderRaw) (io.Reader, HttpStatusCode, error) {
+func (ref *MultiPartHttpClient) GetFile(ctx context.Context, path string, headerRaws ...HeaderRaw) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, ref.addr+path, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	for _, headerRaw := range headerRaws {
@@ -56,8 +56,8 @@ func (ref *MultiPartHttpClient) GetFile(ctx context.Context, path string, header
 
 	resp, err := ref.cl.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
-	return resp.Body, HttpStatusCode(resp.StatusCode), nil
+	return resp, nil
 }
