@@ -53,8 +53,8 @@ func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO 
 	return ref.doRequest(ctx, http.MethodDelete, path, outputDTO, inputDTO, headerRaws...)
 }
 
-func (ref *RestClient) PostFile(ctx ctx.Context, path string, reader io.Reader, inputDTO interface{}, headerRaws ...HeaderRaw) (*http.Response, error) {
-	resp, err := ref.mPartClient.PostFile(ctx, path, reader, headerRaws...)
+func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, filePath string, inputDTO interface{}, headerRaws ...HeaderRaw) (*http.Response, error) {
+	resp, err := ref.mPartClient.PostFile(ctx, path, fileParamName, filePath, headerRaws...)
 	if err != nil {
 		return nil, err
 	}
