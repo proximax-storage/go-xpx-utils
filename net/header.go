@@ -1,9 +1,9 @@
 package net
 
-type HeaderRaw struct {
-	key, value string
+type HeaderRow struct {
+	Key, Value string
 }
 
-func NewHeaderRow(key, value string) *HeaderRaw {
-	return &HeaderRaw{key: key, value: value}
+func NewHeaderRow(key, value string) *HeaderRow {
+	return &HeaderRow{Key: key, Value: value}
 }
