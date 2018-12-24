@@ -1,9 +1,11 @@
 package net
 
-type HeaderRow struct {
-	Key, Value string
-}
+import "net/http"
 
-func NewHeaderRow(key, value string) *HeaderRow {
-	return &HeaderRow{Key: key, Value: value}
+type RequestOption func(req *http.Request)
+
+func NewHeaderRow(key, value string) RequestOption {
+	return func(req *http.Request) {
+		req.Header.Set(key, value)
+	}
 }

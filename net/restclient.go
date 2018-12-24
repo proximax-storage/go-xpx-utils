@@ -37,24 +37,24 @@ func NewRestClient(addr string) (*RestClient, error) {
 	return cl, nil
 }
 
-func (ref *RestClient) Get(ctx ctx.Context, path string, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
-	return ref.doRequest(ctx, http.MethodGet, path, nil, inputDTO, headerRaws...)
+func (ref *RestClient) Get(ctx ctx.Context, path string, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
+	return ref.doRequest(ctx, http.MethodGet, path, nil, inputDTO, options...)
 }
 
-func (ref *RestClient) Post(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
-	return ref.doRequest(ctx, http.MethodPost, path, outputDTO, inputDTO, headerRaws...)
+func (ref *RestClient) Post(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
+	return ref.doRequest(ctx, http.MethodPost, path, outputDTO, inputDTO, options...)
 }
 
-func (ref *RestClient) Put(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
-	return ref.doRequest(ctx, http.MethodPut, path, outputDTO, inputDTO, headerRaws...)
+func (ref *RestClient) Put(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
+	return ref.doRequest(ctx, http.MethodPut, path, outputDTO, inputDTO, options...)
 }
 
-func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
-	return ref.doRequest(ctx, http.MethodDelete, path, outputDTO, inputDTO, headerRaws...)
+func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
+	return ref.doRequest(ctx, http.MethodDelete, path, outputDTO, inputDTO, options...)
 }
 
-func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, filePath string, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
-	resp, err := ref.mPartClient.PostFile(ctx, path, fileParamName, filePath, headerRaws...)
+func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, filePath string, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
+	resp, err := ref.mPartClient.PostFile(ctx, path, fileParamName, filePath, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +62,11 @@ func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, fil
 	return resp, convertRespToJson(resp.Body, inputDTO)
 }
 
-func (ref *RestClient) GetFile(ctx ctx.Context, path string, headerRaws ...*HeaderRow) (*http.Response, error) {
-	return ref.mPartClient.GetFile(ctx, path, headerRaws...)
+func (ref *RestClient) GetFile(ctx ctx.Context, path string, options ...RequestOption) (*http.Response, error) {
+	return ref.mPartClient.GetFile(ctx, path, options...)
 }
 
-func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, headerRaws ...*HeaderRow) (*http.Response, error) {
+func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
 	var body io.Reader
 
 	if outputDTO != nil {
@@ -87,8 +87,8 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	for _, headerRaw := range headerRaws {
-		req.Header.Set(headerRaw.Key, headerRaw.Value)
+	for _, option := range options {
+		option(req)
 	}
 
 	req.WithContext(ctx)
