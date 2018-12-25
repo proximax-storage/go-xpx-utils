@@ -59,6 +59,10 @@ func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, fil
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
+		return resp, errors.New("error")
+	}
+
 	return resp, convertRespToJson(resp.Body, inputDTO)
 }
 
@@ -98,8 +102,8 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		return nil, err
 	}
 
-	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusBadRequest {
-		return resp, errors.New("server error")
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
+		return resp, errors.New("error")
 	}
 
 	return resp, convertRespToJson(resp.Body, inputDTO)

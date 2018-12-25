@@ -60,12 +60,7 @@ func (ref *MultiPartHttpClient) PostFile(ctx context.Context, path string, fileP
 
 	req.WithContext(ctx)
 
-	resp, err := ref.cl.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return ref.cl.Do(req)
 }
 
 func (ref *MultiPartHttpClient) GetFile(ctx context.Context, path string, options ...RequestOption) (*http.Response, error) {
@@ -80,10 +75,5 @@ func (ref *MultiPartHttpClient) GetFile(ctx context.Context, path string, option
 
 	req.WithContext(ctx)
 
-	resp, err := ref.cl.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return ref.cl.Do(req)
 }
