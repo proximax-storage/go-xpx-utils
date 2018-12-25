@@ -60,7 +60,11 @@ func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, fil
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return resp, errors.New("error")
+		if errMsg, err := ioutil.ReadAll(resp.Body); err != nil {
+			return resp, err
+		} else {
+			return resp, errors.New(string(errMsg))
+		}
 	}
 
 	return resp, convertRespToJson(resp.Body, inputDTO)
@@ -103,7 +107,11 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return resp, errors.New("error")
+		if errMsg, err := ioutil.ReadAll(resp.Body); err != nil {
+			return resp, err
+		} else {
+			return resp, errors.New(string(errMsg))
+		}
 	}
 
 	return resp, convertRespToJson(resp.Body, inputDTO)
