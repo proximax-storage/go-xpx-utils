@@ -16,7 +16,7 @@ type MultiPartHttpClient struct {
 	cl   *http.Client
 }
 
-func NewMultiPartHttpClientClient(addr string) (*MultiPartHttpClient, error) {
+func NewMultiPartHttpClient(addr string) (*MultiPartHttpClient, error) {
 	if len(addr) == 0 {
 		return nil, errors.New("address should not be blank")
 	}

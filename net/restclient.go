@@ -23,7 +23,7 @@ func NewRestClient(addr string) (*RestClient, error) {
 		return nil, errors.New("address should not be blank")
 	}
 
-	mPartClient, err := NewMultiPartHttpClientClient(addr)
+	mPartClient, err := NewMultiPartHttpClient(addr)
 	if err != nil {
 		return nil, err
 	}
