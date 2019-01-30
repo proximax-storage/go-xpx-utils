@@ -117,7 +117,7 @@ func handleResponse(resp *http.Response, dto interface{}) (*http.Response, error
 		return resp, convertError(respBodyBytes)
 	}
 
-	return resp, nil
+	return resp, errors.New(string(respBodyBytes))
 }
 
 func convertRespToJson(respBody []byte, inputDTO interface{}) error {
