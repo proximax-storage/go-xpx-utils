@@ -59,11 +59,25 @@ func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, fil
 		return nil, err
 	}
 
-	return handleResponse(resp, inputDTO)
+	return resp, handleResponse(resp, inputDTO)
 }
 
 func (ref *RestClient) GetFile(ctx ctx.Context, path string, options ...RequestOption) (*http.Response, error) {
-	return ref.mPartClient.getFile(ctx, path, options...)
+	resp, err := ref.mPartClient.getFile(ctx, path, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		respBodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, convertError(respBodyBytes)
+	}
+
+	return resp, nil
 }
 
 func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
@@ -98,26 +112,26 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		return nil, err
 	}
 
-	return handleResponse(resp, inputDTO)
+	return resp, handleResponse(resp, inputDTO)
 }
 
-func handleResponse(resp *http.Response, dto interface{}) (*http.Response, error) {
+func handleResponse(resp *http.Response, dto interface{}) error {
 	respBodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	status := resp.StatusCode
 
 	switch status {
 	case http.StatusOK, http.StatusAccepted:
-		return resp, convertRespToJson(respBodyBytes, dto)
+		return convertRespToJson(respBodyBytes, dto)
 
 	case http.StatusBadRequest, http.StatusInternalServerError:
-		return resp, convertError(respBodyBytes)
+		return convertError(respBodyBytes)
 	}
 
-	return resp, errors.New(string(respBodyBytes))
+	return errors.New(string(respBodyBytes))
 }
 
 func convertRespToJson(respBody []byte, inputDTO interface{}) error {

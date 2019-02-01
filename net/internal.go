@@ -1,8 +1,8 @@
 package net
 
 type IdentifiableError struct {
-	ErrorId string        `json:"error_id"`
-	Message string        `json:"message"`
+	ErrorId string        `json:"error_id,omitempty"`
+	Message string        `json:"message,omitempty"`
 	Args    []interface{} `json:"args,omitempty"`
 }
 
