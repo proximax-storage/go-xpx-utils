@@ -72,6 +72,33 @@ func TestRestClient_Post(t *testing.T) {
 	tests.ValidateStringers(t, test1Obj, inputDTO)
 }
 
+func TestRestClient_PostFile(t *testing.T) {
+	mockServer := mock.NewMockWithRoute(&mock.Router{
+		Path:         "/testPostFile",
+		RespHttpCode: http.StatusOK,
+		RespBody:     testRespBody1,
+		FormParams: []mock.FormParameter{
+			{
+				"file",
+				false,
+			},
+		},
+		AcceptedHttpMethods: []string{http.MethodPost},
+	})
+	defer mockServer.Close()
+
+	cl, err := NewRestClient(mockServer.GetServerURL())
+	assert.Nil(t, err)
+
+	inputDTO := &testOne{}
+
+	response, err := cl.PostFile(testContext, "/testPostFile", "file", "restclient_test.go", inputDTO)
+	assert.Nil(t, err)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+
+	tests.ValidateStringers(t, test1Obj, inputDTO)
+}
+
 func TestRestClient_Put(t *testing.T) {
 	mockServer := mock.NewMockWithRoute(&mock.Router{
 		Path:                "/testPut",

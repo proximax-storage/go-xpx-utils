@@ -1,14 +1,12 @@
 package net
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
 )
 
 type multiPartHttpClient struct {
@@ -24,7 +22,7 @@ func newMultiPartHttpClient(addr string) (*multiPartHttpClient, error) {
 	return &multiPartHttpClient{addr: addr, cl: &http.Client{}}, nil
 }
 
-func (ref *multiPartHttpClient) postFile(ctx context.Context, path string, fileParamName, filePath string, options ...RequestOption) (*http.Response, error) {
+func (ref *multiPartHttpClient) postFile(ctx context.Context, path, fileParamName, filePath string, options ...RequestOption) (*http.Response, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -32,22 +30,36 @@ func (ref *multiPartHttpClient) postFile(ctx context.Context, path string, fileP
 
 	defer file.Close()
 
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(fileParamName, filepath.Base(path))
-
+	fi, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = io.Copy(part, file)
+	r, w := io.Pipe()
+	defer r.Close()
 
-	err = writer.Close()
-	if err != nil {
-		return nil, err
-	}
+	writer := multipart.NewWriter(w)
+	go func() {
+		defer func() {
+			w.Close()
+			writer.Close()
+		}()
 
-	req, err := http.NewRequest(http.MethodPost, ref.addr+path, body)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		part, err := writer.CreateFormFile(fileParamName, fi.Name())
+		if err != nil {
+			return
+		}
+
+		_, err = io.Copy(part, file) // Could be a io.CopyBuffer for defined chunk size
+	}()
+
+	req, err := http.NewRequest(http.MethodPost, ref.addr+path, r)
 	if err != nil {
 		return nil, err
 	}
