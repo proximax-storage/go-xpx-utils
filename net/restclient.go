@@ -13,7 +13,7 @@ import (
 type HttpStatusCode int
 
 type RestClient struct {
-	mPartClient *MultiPartHttpClient
+	mPartClient *multiPartHttpClient
 	addr        string
 	cl          *http.Client
 }
@@ -23,7 +23,7 @@ func NewRestClient(addr string) (*RestClient, error) {
 		return nil, errors.New("address should not be blank")
 	}
 
-	mPartClient, err := NewMultiPartHttpClient(addr)
+	mPartClient, err := newMultiPartHttpClient(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -54,24 +54,30 @@ func (ref *RestClient) Delete(ctx ctx.Context, path string, outputDTO, inputDTO 
 }
 
 func (ref *RestClient) PostFile(ctx ctx.Context, path string, fileParamName, filePath string, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
-	resp, err := ref.mPartClient.PostFile(ctx, path, fileParamName, filePath, options...)
+	resp, err := ref.mPartClient.postFile(ctx, path, fileParamName, filePath, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		if errMsg, err := ioutil.ReadAll(resp.Body); err != nil {
-			return resp, err
-		} else {
-			return resp, errors.New(string(errMsg))
-		}
-	}
-
-	return resp, convertRespToJson(resp.Body, inputDTO)
+	return resp, handleResponse(resp, inputDTO)
 }
 
 func (ref *RestClient) GetFile(ctx ctx.Context, path string, options ...RequestOption) (*http.Response, error) {
-	return ref.mPartClient.GetFile(ctx, path, options...)
+	resp, err := ref.mPartClient.getFile(ctx, path, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		respBodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		return resp, convertError(respBodyBytes)
+	}
+
+	return resp, nil
 }
 
 func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO, inputDTO interface{}, options ...RequestOption) (*http.Response, error) {
@@ -106,25 +112,42 @@ func (ref *RestClient) doRequest(ctx ctx.Context, method, path string, outputDTO
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		if errMsg, err := ioutil.ReadAll(resp.Body); err != nil {
-			return resp, err
-		} else {
-			return resp, errors.New(string(errMsg))
-		}
-	}
-
-	return resp, convertRespToJson(resp.Body, inputDTO)
+	return resp, handleResponse(resp, inputDTO)
 }
 
-func convertRespToJson(respBody io.Reader, inputDTO interface{}) error {
+func handleResponse(resp *http.Response, dto interface{}) error {
+	respBodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	status := resp.StatusCode
+
+	switch status {
+	case http.StatusOK, http.StatusAccepted:
+		return convertRespToJson(respBodyBytes, dto)
+
+	case http.StatusBadRequest, http.StatusInternalServerError:
+		return convertError(respBodyBytes)
+	}
+
+	return errors.New(string(respBodyBytes))
+}
+
+func convertRespToJson(respBody []byte, inputDTO interface{}) error {
 	if inputDTO != nil {
-		if buf, err := ioutil.ReadAll(respBody); err != nil {
-			return err
-		} else if len(buf) != 0 {
-			return json.Unmarshal(buf, inputDTO)
-		}
+		return json.Unmarshal(respBody, inputDTO)
 	}
 
 	return nil
+}
+
+func convertError(respBody []byte) error {
+	identifiableError := &IdentifiableError{}
+
+	if err := json.Unmarshal(respBody, identifiableError); err != nil {
+		return err
+	}
+
+	return identifiableError
 }
