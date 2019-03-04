@@ -68,7 +68,7 @@ func (ref *Logger) SetOperationKey(key string) error {
 }
 
 func (ref *Logger) addContextField(ctx context.Context, fields []zap.Field) []zap.Field {
-	if ctx == nil && ctx.Value(ref.operationKey) != nil {
+	if ctx != nil && ctx.Value(ref.operationKey) != nil {
 		fields = append(
 			fields,
 			zap.Any(ref.operationKey, ctx.Value(ref.operationKey)),
