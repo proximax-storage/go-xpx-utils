@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"github.com/proximax-storage/proximax-utils-go/tests"
+	"github.com/proximax-storage/go-xpx-utils/tests"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"

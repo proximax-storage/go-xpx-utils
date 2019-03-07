@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/proximax-storage/proximax-utils-go/mock"
-	"github.com/proximax-storage/proximax-utils-go/str"
+	"github.com/proximax-storage/go-xpx-utils/mock"
+	"github.com/proximax-storage/go-xpx-utils/str"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
