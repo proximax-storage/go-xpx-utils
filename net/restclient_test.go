@@ -1,10 +1,10 @@
 package net
 
 import (
+	"context"
 	"github.com/proximax-storage/go-xpx-utils/mock"
 	"github.com/proximax-storage/go-xpx-utils/tests"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"net/http"
 	"testing"
 )
