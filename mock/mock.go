@@ -86,16 +86,17 @@ func (m *Mock) AddRouter(routers ...*Router) {
 		if router == nil {
 			continue
 		}
+		captureRouterPtr := router
 
 		m.AddHandler(
 			router.Path,
 			func(resp http.ResponseWriter, req *http.Request) {
-				if len(router.AcceptedHttpMethods) != 0 {
+				if len(captureRouterPtr.AcceptedHttpMethods) != 0 {
 					currentMethod := req.Method
 
 					isAccepted := false
 
-					for _, acceptedMethod := range router.AcceptedHttpMethods {
+					for _, acceptedMethod := range captureRouterPtr.AcceptedHttpMethods {
 						if acceptedMethod == currentMethod {
 							isAccepted = true
 							break
@@ -109,7 +110,7 @@ func (m *Mock) AddRouter(routers ...*Router) {
 				}
 
 				// Checking json body
-				if router.ReqJsonBodyStruct != nil {
+				if captureRouterPtr.ReqJsonBodyStruct != nil {
 					bodyBytes, err := ioutil.ReadAll(req.Body)
 
 					if len(bodyBytes) == 0 || err != nil {
@@ -118,7 +119,7 @@ func (m *Mock) AddRouter(routers ...*Router) {
 						return
 					}
 
-					jsonStructType := reflect.TypeOf(router.ReqJsonBodyStruct)
+					jsonStructType := reflect.TypeOf(captureRouterPtr.ReqJsonBodyStruct)
 
 					newObj := reflect.New(jsonStructType).Elem().Addr()
 
@@ -131,7 +132,7 @@ func (m *Mock) AddRouter(routers ...*Router) {
 
 						return
 					}
-				} else if len(router.FormParams) != 0 { // If not json maybe are there form parameters ?
+				} else if len(captureRouterPtr.FormParams) != 0 { // If not json maybe are there form parameters ?
 					errors := make([]string, 0, 1)
 
 					if err := req.ParseForm(); err != nil {
@@ -142,7 +143,7 @@ func (m *Mock) AddRouter(routers ...*Router) {
 						return
 					}
 
-					for _, param := range router.FormParams {
+					for _, param := range captureRouterPtr.FormParams {
 						val := req.Form[param.Name]
 
 						if param.IsRequired && len(val) == 0 {
@@ -159,12 +160,12 @@ func (m *Mock) AddRouter(routers ...*Router) {
 					}
 				}
 
-				if router.RespHttpCode != 0 {
-					resp.WriteHeader(router.RespHttpCode)
+				if captureRouterPtr.RespHttpCode != 0 {
+					resp.WriteHeader(captureRouterPtr.RespHttpCode)
 				}
 
-				if len(router.RespBody) != 0 {
-					writeStringToResp(resp, router.RespBody)
+				if len(captureRouterPtr.RespBody) != 0 {
+					writeStringToResp(resp, captureRouterPtr.RespBody)
 				}
 			},
 		)
